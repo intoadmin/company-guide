@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INTO INFO — Login</title>
-<link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/company-guide/assets/style.css">
 <style>
   .login-card {
     background: var(--card);
@@ -45,7 +45,7 @@
 </head>
 <body class="login-body">
 <div class="login-card">
-  <img src="/assets/logo.svg" alt="i2 logo">
+  <img src="/company-guide/assets/logo.svg" alt="i2 logo">
   <h1>INTO INFO</h1>
   <p>Enter your password to access the documentation.</p>
   <input type="password" id="pw" placeholder="Password" autofocus>
@@ -53,7 +53,7 @@
   <p class="loading" id="loading">Decrypting…</p>
   <button id="btn" onclick="attemptLogin()">Unlock</button>
 </div>
-<script src="/assets/auth-config.js"></script>
+<script src="/company-guide/assets/auth-config.js"></script>
 <script>
 async function hashPassword(password, saltHex) {
   var enc = new TextEncoder();
@@ -85,14 +85,11 @@ async function attemptLogin() {
     }
 
     // Store password in sessionStorage for page decryption
-    // sessionStorage is cleared when tab closes — not persisted
     sessionStorage.setItem("pw", password);
     sessionStorage.setItem("authed", "true");
 
-    // Redirect to requested page or home
-    var params = new URLSearchParams(window.location.search);
-    var redirect = params.get("redirect") || "/";
-    window.location.href = redirect;
+    // Redirect to home page
+    window.location.href = "/company-guide/index.html";
   } catch (e) {
     console.error(e);
     err.textContent = "An error occurred. Please try again.";

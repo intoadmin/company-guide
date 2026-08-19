@@ -1,17 +1,15 @@
 // Decrypt page content using session-derived key
-// Key is re-derived from sessionStorage-stored password
 (async function () {
   var AUTH_CONFIG = window.AUTH_CONFIG || {};
   var PAGE_DATA = window.PAGE_DATA || {};
   var contentEl = document.getElementById("content");
+  var BASE = "/company-guide";
 
-  // Get password from sessionStorage (stored by decrypt.html on login)
+  // Check if authed
   var password = sessionStorage.getItem("pw");
   if (!password) {
     // Not authed — redirect to login
-    var currentPath = window.location.pathname;
-    var base = window.location.origin;
-    window.location.href = base + "/decrypt.html?redirect=" + encodeURIComponent(currentPath);
+    window.location.href = BASE + "/decrypt.html?redirect=" + encodeURIComponent(window.location.pathname);
     return;
   }
 
@@ -36,19 +34,18 @@
 
     // Render decrypted HTML
     contentEl.innerHTML = html;
-    contentEl.querySelector(".decrypting-msg")?.remove();
 
     // Highlight active nav link
     var path = window.location.pathname;
     var links = document.querySelectorAll(".nav-links a");
     links.forEach(function (link) {
       var href = link.getAttribute("href");
-      if (href && path.endsWith(href.replace(/^\//, ""))) {
+      if (href && path.includes(href)) {
         link.classList.add("active");
       }
     });
   } catch (e) {
     console.error("Decryption failed:", e);
-    contentEl.innerHTML = '<p style="color:#cc0000;font-size:16px;padding:40px 0;">Failed to decrypt content. Please <a href="/decrypt.html">log in again</a>.</p>';
+    contentEl.innerHTML = '<p style="color:#cc0000;font-size:16px;padding:40px 0;">Failed to decrypt content. Please <a href="' + BASE + '/decrypt.html">log in again</a>.</p>';
   }
 })();
