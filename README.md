@@ -1,27 +1,22 @@
-# INTO INFO — Onboarding & Policies
+# INTO INFO — Company Guide
 
-Internal documentation for INTO INFO SDN BHD, hosted on GitHub Pages.
+Encrypted documentation site hosted on GitHub Pages.
 
-## Documents
+## Access
 
-- [`ONBOARDING.md`](./ONBOARDING.md) — Developer Onboarding Guide
-- [`HANDBOOK.md`](./HANDBOOK.md) — Company Handbook (all employees)
-- [`DEVELOPER_POLICY.md`](./DEVELOPER_POLICY.md) — Developer Policy Handbook
+Visit the Pages URL and enter the password provided by your administrator.
 
-## Local Development
+## Content
 
-```bash
-gem install bundler jekyll
-bundle install
-bundle exec jekyll serve
-```
+All page content is AES-256-GCM encrypted. The plaintext password is not stored
+in this repository — only a salted SHA-256 hash for verification and a PBKDF2
+salt for key derivation.
 
-Site runs at `http://localhost:4000`.
+## Architecture
 
-## GitHub Pages
-
-1. Push to the `main` branch.
-2. Repo **Settings → Pages** → Source: **Deploy from a branch** → `main` / `(root)`.
-3. Site URL: `https://<org-or-username>.github.io/<repo-name>` (visible to org members only for private repos).
-
-> **Note:** Private repos require GitHub Pro/Team/Enterprise for GitHub Pages access. Ensure org members have access to the repo.
+- `decrypt.html` — login page (verifies password hash, derives AES key)
+- `*.html` — encrypted page content (ciphertext only in source)
+- `assets/auth-config.js` — password hash + KDF salt (no plaintext)
+- `assets/decrypt-page.js` — client-side decryption logic
+- `assets/style.css` — site styling
+- `assets/logo.svg` — company logo

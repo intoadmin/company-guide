@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INTO INFO — Login</title>
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+  .login-card {
+    background: var(--card);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 40px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+  body.login-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .login-card img { width: 64px; height: auto; margin-bottom: 16px; }
+  .login-card h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .login-card p { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .login-card input {
+    width: 100%; padding: 12px 16px; font-size: 16px;
+    border: 2px solid var(--border); border-radius: 8px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-card input:focus { border-color: var(--blue); }
+  .login-card .error { color: var(--error); font-size: 13px; margin-top: 12px; display: none; }
+  .login-card .error.show { display: block; }
+  .login-card button {
+    width: 100%; padding: 12px; margin-top: 16px; font-size: 16px;
+    font-weight: 600; color: #fff; background: var(--blue);
+    border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s;
+  }
+  .login-card button:hover { opacity: 0.9; }
+  .login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .loading { font-size: 14px; color: var(--muted); margin-top: 12px; display: none; }
+  :root { --error: #cc0000; }
+</style>
+</head>
+<body class="login-body">
+<div class="login-card">
+  <img src="/assets/logo.svg" alt="i2 logo">
+  <h1>INTO INFO</h1>
+  <p>Enter your password to access the documentation.</p>
+  <input type="password" id="pw" placeholder="Password" autofocus>
+  <p class="error" id="err">Incorrect password. Please try again.</p>
+  <p class="loading" id="loading">Decrypting…</p>
+  <button id="btn" onclick="attemptLogin()">Unlock</button>
+</div>
+<script src="/assets/auth-config.js"></script>
+<script>
+async function hashPassword(password, saltHex) {
+  var enc = new TextEncoder();
+  var data = enc.encode(saltHex + password);
+  var hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(function (b) { return b.toString(16).padStart(2, "0"); })
+    .join("");
+}
+
+async function attemptLogin() {
+  var input = document.getElementById("pw");
+  var btn = document.getElementById("btn");
+  var err = document.getElementById("err");
+  var loading = document.getElementById("loading");
+  var password = input.value;
+
+  err.classList.remove("show");
+  btn.disabled = true;
+  loading.style.display = "block";
+
+  try {
+    var hash = await hashPassword(password, AUTH_CONFIG.pw_salt);
+    if (hash !== AUTH_CONFIG.pw_hash) {
+      err.classList.add("show");
+      btn.disabled = false;
+      loading.style.display = "none";
+      return;
+    }
+
+    // Store password in sessionStorage for page decryption
+    // sessionStorage is cleared when tab closes — not persisted
+    sessionStorage.setItem("pw", password);
+    sessionStorage.setItem("authed", "true");
+
+    // Redirect to requested page or home
+    var params = new URLSearchParams(window.location.search);
+    var redirect = params.get("redirect") || "/";
+    window.location.href = redirect;
+  } catch (e) {
+    console.error(e);
+    err.textContent = "An error occurred. Please try again.";
+    err.classList.add("show");
+    btn.disabled = false;
+    loading.style.display = "none";
+  }
+}
+
+document.getElementById("pw").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") attemptLogin();
+});
+</script>
+</body>
+</html>
