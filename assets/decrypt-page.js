@@ -8,8 +8,7 @@
   // Check if authed
   var password = sessionStorage.getItem("pw");
   if (!password) {
-    // Not authed — redirect to login
-    window.location.href = BASE + "/decrypt.html?redirect=" + encodeURIComponent(window.location.pathname);
+    window.location.href = BASE + "/decrypt.html?redirect=" + encodeURIComponent(window.location.pathname + window.location.hash);
     return;
   }
 
@@ -44,6 +43,23 @@
         link.classList.add("active");
       }
     });
+
+    // Scroll to anchor if present in URL (from search result click)
+    var hash = window.location.hash;
+    if (hash) {
+      var anchorId = hash.substring(1);
+      // Small delay to ensure DOM is ready
+      setTimeout(function () {
+        var target = document.getElementById(anchorId);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Briefly highlight the section
+          target.style.transition = "background-color 0.5s";
+          target.style.backgroundColor = "rgba(0, 85, 164, 0.1)";
+          setTimeout(function () { target.style.backgroundColor = ""; }, 2000);
+        }
+      }, 100);
+    }
   } catch (e) {
     console.error("Decryption failed:", e);
     contentEl.innerHTML = '<p style="color:#cc0000;font-size:16px;padding:40px 0;">Failed to decrypt content. Please <a href="' + BASE + '/decrypt.html">log in again</a>.</p>';
