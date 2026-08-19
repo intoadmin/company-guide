@@ -43,50 +43,77 @@
     return tmp.textContent || tmp.innerText || "";
   }
 
-  // Split decrypted HTML into sections by headings (h1-h4)
-  // Each section gets: sectionTitle, anchor (heading id), text content
+  // Split HTML into sections — each section contains ONLY the text
+  // between a heading and the next heading at the SAME or HIGHER level.
+  // This prevents duplicate results where a parent h2 section includes
+  // all the text of its child h3 sections.
   function splitIntoSections(html, pageTitle) {
     var parser = new DOMParser();
     var doc = parser.parseFromString(html, "text/html");
-    var headings = doc.querySelectorAll("h1, h2, h3, h4");
-    var sections = [];
+    var allElements = doc.body.querySelectorAll("h1, h2, h3, h4, p, ul, ol, table, blockquote, pre, hr, div");
 
-    if (headings.length === 0) {
-      // No headings — index the whole page
-      sections.push({
-        sectionTitle: pageTitle,
-        anchor: "",
-        text: stripHtml(html).toLowerCase(),
-      });
-      return sections;
+    if (allElements.length === 0) {
+      return [{ sectionTitle: pageTitle, anchor: "", text: stripHtml(html).toLowerCase() }];
     }
 
-    for (var i = 0; i < headings.length; i++) {
-      var heading = headings[i];
-      var headingId = heading.id || "";
-      var headingText = heading.textContent || heading.innerText || "";
-      var level = parseInt(heading.tagName.substring(1));
-
-      // Collect all text until the next heading of same or higher level
-      var textParts = [headingText];
-      var node = heading.nextElementSibling;
-      while (node) {
-        var tag = node.tagName.toLowerCase();
-        if (tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4") {
-          // Stop at next heading — but include h3/h4 content under h2
-          var nodeLevel = parseInt(tag.substring(1));
-          if (nodeLevel <= level) break;
-        }
-        textParts.push(node.textContent || node.innerText || "");
-        node = node.nextElementSibling;
+    // Build a flat list of {type, level, element} for walking
+    var blocks = [];
+    for (var i = 0; i < allElements.length; i++) {
+      var el = allElements[i];
+      var tag = el.tagName.toLowerCase();
+      if (tag.match(/^h[1-4]$/)) {
+        blocks.push({ type: "heading", level: parseInt(tag[1]), el: el });
+      } else {
+        blocks.push({ type: "content", level: 0, el: el });
       }
+    }
 
-      var fullText = textParts.join(" ").toLowerCase();
-      sections.push({
-        sectionTitle: headingText,
-        anchor: headingId,
-        text: fullText,
-      });
+    // Walk blocks and assign each content block to the NEAREST preceding heading
+    // (the most recent heading, regardless of level — i.e. the immediate parent)
+    var sections = [];
+    var currentHeading = null;
+    var currentText = [];
+    var currentAnchor = "";
+    var currentLevel = 0;
+
+    function flushSection() {
+      if (currentHeading !== null) {
+        sections.push({
+          sectionTitle: currentHeading,
+          anchor: currentAnchor,
+          text: currentText.join(" ").toLowerCase(),
+        });
+      }
+    }
+
+    for (var j = 0; j < blocks.length; j++) {
+      var block = blocks[j];
+      if (block.type === "heading") {
+        // Flush previous section
+        flushSection();
+        // Start new section
+        currentHeading = block.el.textContent || block.el.innerText || "";
+        currentAnchor = block.el.id || "";
+        currentLevel = block.level;
+        currentText = [currentHeading]; // include heading text in searchable content
+      } else {
+        // Only add content to the most recent (nearest) heading section
+        // This prevents the same text from appearing under multiple headings
+        if (currentHeading !== null) {
+          currentText.push(block.el.textContent || block.el.innerText || "");
+        } else {
+          // Content before any heading — add as page-level section
+          currentHeading = pageTitle;
+          currentAnchor = "";
+          currentText = [block.el.textContent || block.el.innerText || ""];
+        }
+      }
+    }
+    flushSection();
+
+    // If there were no headings at all, index the whole page
+    if (sections.length === 0) {
+      sections.push({ sectionTitle: pageTitle, anchor: "", text: stripHtml(html).toLowerCase() });
     }
 
     return sections;
@@ -125,15 +152,21 @@
     }
 
     var results = [];
+    var seen = new Set(); // dedupe by (url + anchor) — same section only once
+
     for (var i = 0; i < searchIndex.length; i++) {
       var entry = searchIndex[i];
+      var key = entry.url + "#" + entry.anchor;
+      if (seen.has(key)) continue;
+
       var idx = entry.text.indexOf(query);
       if (idx !== -1) {
         var start = Math.max(0, idx - 40);
         var end = Math.min(entry.text.length, idx + query.length + 60);
         var snippet = (start > 0 ? "…" : "") + entry.text.substring(start, end) + (end < entry.text.length ? "…" : "");
         var link = entry.url + (entry.anchor ? "#" + entry.anchor : "");
-        results.push({ link: link, title: entry.title, sectionTitle: entry.sectionTitle, snippet: snippet });
+        results.push({ link: link, title: entry.title, sectionTitle: entry.sectionTitle, snippet: snippet, key: key });
+        seen.add(key);
       }
     }
 
