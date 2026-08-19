@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <style>
+      .blue { fill: #0055A4; }
+      .white { fill: #FFFFFF; }
+    </style>
+  </defs>
+
+  <!-- "i" stem: outer blue rounded rect with white inner -->
+  <rect x="20" y="70" width="52" height="120" rx="6" class="blue"/>
+  <rect x="30" y="80" width="32" height="100" rx="2" class="white"/>
+
+  <!-- "2" badge: rounded blue shape connected to stem -->
+  <path d="M 72 70
+           L 150 70
+           Q 190 70 190 110
+           L 190 160
+           Q 190 190 160 190
+           L 90 190
+           Q 72 190 72 176
+           Z" class="blue"/>
+
+  <!-- White "2" as negative space -->
+  <path d="M 104 104
+           Q 104 88 124 88
+           Q 156 88 156 110
+           Q 156 124 136 136
+           L 116 160
+           L 160 160
+           L 160 174
+           L 96 174
+           L 96 160
+           L 130 124
+           Q 140 116 140 110
+           Q 140 104 124 104
+           Q 116 104 116 110
+           L 104 110
+           Z" class="white"/>
+
+  <!-- "i" dot: blue ring with white interior -->
+  <circle cx="46" cy="44" r="36" class="blue"/>
+  <circle cx="46" cy="44" r="26" class="white"/>
+
+  <!-- Droplet inside dot, pointing upward -->
+  <path d="M 46 20
+           Q 62 36 62 52
+           Q 62 68 46 68
+           Q 30 68 30 52
+           Q 30 36 46 20
+           Z" class="blue"/>
+</svg>
