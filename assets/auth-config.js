@@ -1,1 +1,1 @@
-var AUTH_CONFIG = {"pw_salt": "75174efe6902e841fad198a77cb123e0", "pw_hash": "3b023aa952c2864bb6c7475160983230654b12fb4e6a4cb2dbb581324294900b", "kdf_salt": "f2f25467ca5df38f0312069892fc6d3a"};
+var AUTH_CONFIG = {"pw_salt": "49fed5e754f0e3c83a57c7797528911e", "pw_hash": "2679323e350e4ceb01365d9619ef29fbb82a3ccaf41b21ac8d43a1cc43e38779", "kdf_salt": "7ef944e96f211705c63f0028d57adae3"};
