@@ -1,3 +1,29 @@
+// Scroll to anchor with 20px top offset, smooth scrolling, and highlight
+function scrollToAnchor(anchorId) {
+  var target = document.getElementById(anchorId);
+  if (!target) return;
+
+  // Calculate position with 20px top padding
+  var rect = target.getBoundingClientRect();
+  var currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+  var targetPos = currentScroll + rect.top - 20;
+
+  // Clamp to max scroll (don't try to scroll past the bottom)
+  var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  if (targetPos > maxScroll) targetPos = maxScroll;
+  if (targetPos < 0) targetPos = 0;
+
+  window.scrollTo({
+    top: targetPos,
+    behavior: "smooth",
+  });
+
+  // Briefly highlight the section
+  target.style.transition = "background-color 0.5s";
+  target.style.backgroundColor = "rgba(0, 85, 164, 0.1)";
+  setTimeout(function () { target.style.backgroundColor = ""; }, 2000);
+}
+
 // Decrypt page content using session-derived key
 (async function () {
   var AUTH_CONFIG = window.AUTH_CONFIG || {};
@@ -50,16 +76,22 @@
       var anchorId = hash.substring(1);
       // Small delay to ensure DOM is ready
       setTimeout(function () {
-        var target = document.getElementById(anchorId);
-        if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-          // Briefly highlight the section
-          target.style.transition = "background-color 0.5s";
-          target.style.backgroundColor = "rgba(0, 85, 164, 0.1)";
-          setTimeout(function () { target.style.backgroundColor = ""; }, 2000);
-        }
+        scrollToAnchor(anchorId);
       }, 100);
     }
+
+    // Handle clicks on in-page TOC links (#anchor)
+    document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        var anchorId = link.getAttribute("href").substring(1);
+        if (anchorId) {
+          e.preventDefault();
+          scrollToAnchor(anchorId);
+          // Update URL hash without jumping
+          history.replaceState(null, null, "#" + anchorId);
+        }
+      });
+    });
   } catch (e) {
     console.error("Decryption failed:", e);
     contentEl.innerHTML = '<p style="color:#cc0000;font-size:16px;padding:40px 0;">Failed to decrypt content. Please <a href="' + BASE + '/decrypt.html">log in again</a>.</p>';
